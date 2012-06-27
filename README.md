@@ -4,7 +4,7 @@ The JavaScript library which combines the flexibility of scripts with the power 
 ## sharpnr.js is JavaScript
 First of all this is a JavaScript library, you don't need to learn a new language, you don't need to precompile code to use our library, you only need to include one more js file in your pages.
 
-## shaprnr.js is easy to use
+## sharpnr.js is easy to use
 The best thing of C# is that it has a great syntax, lambda and the new await/async are easy to use, easy to understand ways to make code shorter and more structured. That's the thing we borrowed from C# to make JavaScript better.
 
 ## sharpnr.js is compatible
