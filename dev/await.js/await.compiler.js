@@ -14,7 +14,7 @@ sharpnr.await.compiler.buildStatement = function (expression, counter, opts) {
   var outputEnd = [];
 
   //Initialize parser state.
-  var state = await.parser.createParserState();
+  var state = sharpnr.parser.createParserState();
   state.hasDot = false;
   state.inKeyword = false;
   state.keyword = "";
@@ -96,7 +96,7 @@ sharpnr.await.compiler.buildStatement = function (expression, counter, opts) {
       output += state.lastChar;
     }
 
-    if (!await.parser.ensureProcessable(state)) {
+    if (!sharpnr.parser.ensureProcessable(state)) {
       state.inKeyword = false;
 
       if (state.char == '}' && outputEnd[state.blockLevel] != undefined) {
@@ -119,7 +119,7 @@ sharpnr.await.compiler.buildStatement = function (expression, counter, opts) {
     }
 
     //Check for whitespace, separators and new line.
-    if (await.parser.isSeparator(state.char)) {
+    if (sharpnr.parser.isSeparator(state.char)) {
       state.inKeyword = false;
       state.hasDot = false;
       continue;
@@ -127,7 +127,7 @@ sharpnr.await.compiler.buildStatement = function (expression, counter, opts) {
 
     //Check for keyword.
     //WARNING: Keywords can't start with a dot.
-    if (await.parser.isIdentifierStart(state.char) && !state.hasDot && !state.inKeyword) {
+    if (sharpnr.parser.isIdentifierStart(state.char) && !state.hasDot && !state.inKeyword) {
       state.inKeyword = true;
       state.keyword = state.char;
       continue;
@@ -154,12 +154,12 @@ sharpnr.await.compiler.buildStatement = function (expression, counter, opts) {
 
 //Builds an awaitable while segment.
 sharpnr.await.compiler.buildWhile = function (source, startIndex, counter) {
-  var expressionStart = await.parser.findProcessableChar(source, '(', startIndex) + 1; //Find the start of the expression.
-  var expressionEnd = await.parser.findSegmentEnd(source, expressionStart); //Find the end of the expression.
+  var expressionStart = sharpnr.parser.findProcessableChar(source, '(', startIndex) + 1; //Find the start of the expression.
+  var expressionEnd = sharpnr.parser.findSegmentEnd(source, expressionStart); //Find the end of the expression.
   var expression = "function() { return " + source.substring(expressionStart, expressionEnd) + ";}";
 
-  var blockStart = await.parser.findProcessableChar(source, '{', expressionEnd + 1) + 1; //Find the start of the while block;
-  var blockEnd = await.parser.findBlockEnd(source, blockStart); //Find the end of the while block;
+  var blockStart = sharpnr.parser.findProcessableChar(source, '{', expressionEnd + 1) + 1; //Find the start of the while block;
+  var blockEnd = sharpnr.parser.findBlockEnd(source, blockStart); //Find the end of the while block;
   var statement = "function($$$cb" + counter + ") {" + sharpnr.await.compiler.buildStatement(source.substring(blockStart, blockEnd) + " $$$cb" + counter + "();", counter + 1, { insideLoop: true }) + "}";
 
   var result = "sharpnr.await.$while(" + expression + "," + statement + ", function() {"
@@ -172,12 +172,12 @@ sharpnr.await.compiler.buildWhile = function (source, startIndex, counter) {
 
 //Builds an awaitable do-while segment.
 sharpnr.await.compiler.buildDoWhile = function (source, startIndex, counter) {
-  var blockStart = await.parser.findProcessableChar(source, '{', startIndex) + 1; //Find the start of the while block;
-  var blockEnd = await.parser.findBlockEnd(source, blockStart); //Find the end of the while block;
+  var blockStart = sharpnr.parser.findProcessableChar(source, '{', startIndex) + 1; //Find the start of the while block;
+  var blockEnd = sharpnr.parser.findBlockEnd(source, blockStart); //Find the end of the while block;
   var statement = "function($$$cb" + counter + ") {" + sharpnr.await.compiler.buildStatement(source.substring(blockStart, blockEnd) + " $$$cb" + counter + "();", counter + 1, { insideLoop: true }) + "}";
 
-  var expressionStart = await.parser.findProcessableChar(source, '(', blockEnd + 1) + 1; //Find the start of the expression.
-  var expressionEnd = await.parser.findSegmentEnd(source, expressionStart); //Find the end of the expression.
+  var expressionStart = sharpnr.parser.findProcessableChar(source, '(', blockEnd + 1) + 1; //Find the start of the expression.
+  var expressionEnd = sharpnr.parser.findSegmentEnd(source, expressionStart); //Find the end of the expression.
   var expression = "function() { return " + source.substring(expressionStart, expressionEnd) + ";}";
 
   var result = "sharpnr.await.$doWhile(" + expression + "," + statement + ", function() {"
@@ -193,8 +193,8 @@ sharpnr.await.compiler.buildFor = function (source, startIndex, counter, opts) {
   if (!opts) { opts = { forceForeach: false }; }
   if (!opts.forceForeach) { opts.forceForeach = false; }
 
-  var expressionStart = await.parser.findProcessableChar(source, '(', startIndex) + 1; //Find the start of the expression.
-  var expressionEnd = await.parser.findSegmentEnd(source, expressionStart); //Find the end of the expression.
+  var expressionStart = sharpnr.parser.findProcessableChar(source, '(', startIndex) + 1; //Find the start of the expression.
+  var expressionEnd = sharpnr.parser.findSegmentEnd(source, expressionStart); //Find the end of the expression.
   var expression = source.substring(expressionStart, expressionEnd);
 
   var parts = expression.split(';');
@@ -203,9 +203,9 @@ sharpnr.await.compiler.buildFor = function (source, startIndex, counter, opts) {
   if (parts.length == 3) {
     //Try to find a local variable to use in context simulation.
     if (parts[0] != undefined && parts[0] != "") {
-      var findVarRes = await.parser.findIdentifier(parts[0]);
+      var findVarRes = sharpnr.parser.findIdentifier(parts[0]);
       if (findVarRes.output == "var") {
-        varName = await.parser.findIdentifier(parts[0], findVarRes.cursor + 3).output;
+        varName = sharpnr.parser.findIdentifier(parts[0], findVarRes.cursor + 3).output;
         expr1 = "function() { " + parts[0] + "; return " + varName + ";}";
       }
       else {
@@ -221,9 +221,9 @@ sharpnr.await.compiler.buildFor = function (source, startIndex, counter, opts) {
   else {
     parts = expression.split(" in ");
     if (parts.length == 2) {
-      var findVarRes = await.parser.findIdentifier(parts[0]);
+      var findVarRes = sharpnr.parser.findIdentifier(parts[0]);
       if (findVarRes.output == "var") {
-        varName = await.parser.findIdentifier(parts[0], findVarRes.cursor + 3).output;
+        varName = sharpnr.parser.findIdentifier(parts[0], findVarRes.cursor + 3).output;
       }
       expr1 = "function($$$value) { " + parts[0] + " = $$$value; }";
       expr2 = "function(" + varName + ") { return " + parts[1] + ";}";
@@ -233,8 +233,8 @@ sharpnr.await.compiler.buildFor = function (source, startIndex, counter, opts) {
     }
   }
 
-  var blockStart = await.parser.findProcessableChar(source, '{', expressionEnd + 1) + 1; //Find the start of the while block;
-  var blockEnd = await.parser.findBlockEnd(source, blockStart); //Find the end of the while block;
+  var blockStart = sharpnr.parser.findProcessableChar(source, '{', expressionEnd + 1) + 1; //Find the start of the while block;
+  var blockEnd = sharpnr.parser.findBlockEnd(source, blockStart); //Find the end of the while block;
   var statement = "";
   if (varName != "") {
     statement = "function(" + varName + ", $$$cb" + counter + ") {" + sharpnr.await.compiler.buildStatement(source.substring(blockStart, blockEnd) + " $$$cb" + counter + "();", counter + 1, { insideLoop: true }) + "}";
@@ -271,7 +271,7 @@ sharpnr.await.compiler.buildContinue = function (source, startIndex, counter) {
 //Builds an awaitable if segment.
 sharpnr.await.compiler.buildIf = function (source, startIndex, counter) {
   //Build the default if statement:
-  var res = await.parser._buildIfInternal(source, startIndex, counter);
+  var res = sharpnr.parser._buildIfInternal(source, startIndex, counter);
   var ifStatement = res.output;
   var result = "sharpnr.await.$if({e:" + ifStatement.expr + ", s:" + ifStatement.stmt + "}, [";
 
@@ -280,18 +280,18 @@ sharpnr.await.compiler.buildIf = function (source, startIndex, counter) {
   var hasElse = false;
   while (true) {
     //Try to find an else clause:
-    var findElseRes = await.parser.findIdentifier(source, res.cursor);
+    var findElseRes = sharpnr.parser.findIdentifier(source, res.cursor);
     if (findElseRes.output == "else") {
       var nextStatementStart = findElseRes.cursor + 4;
-      if (await.parser.findIdentifier(source, nextStatementStart).output == "if") {
+      if (sharpnr.parser.findIdentifier(source, nextStatementStart).output == "if") {
         //else if statement
-        res = await.parser._buildIfInternal(source, nextStatementStart, counter);
+        res = sharpnr.parser._buildIfInternal(source, nextStatementStart, counter);
         result += (hasElseIf ? ',' : '') + "{e:" + res.output.expr + ", s:" + res.output.stmt + "}";
         hasElseIf = true;
       }
       else {
         //else statement
-        res = await.parser._buildElseInternal(source, nextStatementStart, counter);
+        res = sharpnr.parser._buildElseInternal(source, nextStatementStart, counter);
         result += "]," + res.output + ",";
         hasElse = true;
         break;
@@ -308,22 +308,22 @@ sharpnr.await.compiler.buildIf = function (source, startIndex, counter) {
   return { output: result, outputEnd: resultEnd, cursor: res.cursor }; // Return the cursor and the result of the build.
 }
 
-await.parser._buildIfInternal = function (source, startIndex, counter) {
-  var expressionStart = await.parser.findProcessableChar(source, '(', startIndex) + 1; //Find the start of the expression.
-  var expressionEnd = await.parser.findSegmentEnd(source, expressionStart); //Find the end of the expression.
+sharpnr.parser._buildIfInternal = function (source, startIndex, counter) {
+  var expressionStart = sharpnr.parser.findProcessableChar(source, '(', startIndex) + 1; //Find the start of the expression.
+  var expressionEnd = sharpnr.parser.findSegmentEnd(source, expressionStart); //Find the end of the expression.
   var expression = "function() { return " + source.substring(expressionStart, expressionEnd) + ";}";
 
-  var blockStart = await.parser.findProcessableChar(source, '{', expressionEnd + 1) + 1; //Find the start of the while block;
-  var blockEnd = await.parser.findBlockEnd(source, blockStart); //Find the end of the while block;
+  var blockStart = sharpnr.parser.findProcessableChar(source, '{', expressionEnd + 1) + 1; //Find the start of the while block;
+  var blockEnd = sharpnr.parser.findBlockEnd(source, blockStart); //Find the end of the while block;
   var statement = "function($$$cb" + counter + ") {" + sharpnr.await.compiler.buildStatement(source.substring(blockStart, blockEnd) + " $$$cb" + counter + "();", counter + 1) + "}";
 
   var ifStatement = { expr: expression, stmt: statement };
   return { output: ifStatement, cursor: blockEnd + 1 };
 }
 
-await.parser._buildElseInternal = function (source, startIndex, counter) {
-  var blockStart = await.parser.findProcessableChar(source, '{', startIndex) + 1; //Find the start of the while block;
-  var blockEnd = await.parser.findBlockEnd(source, blockStart); //Find the end of the while block;
+sharpnr.parser._buildElseInternal = function (source, startIndex, counter) {
+  var blockStart = sharpnr.parser.findProcessableChar(source, '{', startIndex) + 1; //Find the start of the while block;
+  var blockEnd = sharpnr.parser.findBlockEnd(source, blockStart); //Find the end of the while block;
 
   var statement = "function($$$cb" + counter + ") {" + sharpnr.await.compiler.buildStatement(source.substring(blockStart, blockEnd) + " $$$cb" + counter + "();", counter + 1) + "}";
 
@@ -334,8 +334,8 @@ await.parser._buildElseInternal = function (source, startIndex, counter) {
 
 //Builds an awaitable switch segment.
 sharpnr.await.compiler.buildSwitch = function (source, startIndex, counter) {
-  var expressionStart = await.parser.findProcessableChar(source, '(', startIndex) + 1; //Find the start of the expression.
-  var expressionEnd = await.parser.findSegmentEnd(source, expressionStart); //Find the end of the expression.
+  var expressionStart = sharpnr.parser.findProcessableChar(source, '(', startIndex) + 1; //Find the start of the expression.
+  var expressionEnd = sharpnr.parser.findSegmentEnd(source, expressionStart); //Find the end of the expression.
   var expression = "function() { return " + source.substring(expressionStart, expressionEnd) + ";}";
 
   var result = "sharpnr.await.$switch(" + expression + ", [";
@@ -346,17 +346,17 @@ sharpnr.await.compiler.buildSwitch = function (source, startIndex, counter) {
   var hasCase = false;
   var hasDefault = false;
   while (true) {
-    var identifierRes = await.parser.findIdentifier(source, res.cursor);
+    var identifierRes = sharpnr.parser.findIdentifier(source, res.cursor);
     if (identifierRes.output == "case") {
       var nextStatementStart = identifierRes.cursor;
-      res = await.parser._buildCaseInternal(source, nextStatementStart, counter);
+      res = sharpnr.parser._buildCaseInternal(source, nextStatementStart, counter);
       result += (hasCase ? ',' : '') + "{v:" + res.output.val + ",s:" + res.output.stmt + "}";
       hasCase = true;
       continue;
     }
     else if (identifierRes.output == "default") {
       var nextStatementStart = identifierRes.cursor;
-      res = await.parser._buildDefaultCaseInternal(source, nextStatementStart, counter);
+      res = sharpnr.parser._buildDefaultCaseInternal(source, nextStatementStart, counter);
       result += "]," + res.output + ",";
       hasDefault = true;
     }
@@ -368,15 +368,15 @@ sharpnr.await.compiler.buildSwitch = function (source, startIndex, counter) {
   result += (!hasDefault ? "],null," : '') + "function() {";
   var resultEnd = "});";
 
-  var blockStart = await.parser.findProcessableChar(source, '{', startIndex) + 1; //Find the start of the switch block;
-  var blockEnd = await.parser.findBlockEnd(source, blockStart); //Find the end of the switch block;
+  var blockStart = sharpnr.parser.findProcessableChar(source, '{', startIndex) + 1; //Find the start of the switch block;
+  var blockEnd = sharpnr.parser.findBlockEnd(source, blockStart); //Find the end of the switch block;
 
   return { output: result, outputEnd: resultEnd, cursor: blockEnd + 1 }; // Return the cursor and the result of the build.
 }
 
-await.parser._buildCaseInternal = function (source, startIndex, counter) {
-  var blockStart = await.parser.findProcessableChar(source, ':', startIndex) + 1; //Find the start of the case;
-  var blockEnd = await.parser.findIdentifierFirst(source, "break", blockStart); //Find the end of the case;
+sharpnr.parser._buildCaseInternal = function (source, startIndex, counter) {
+  var blockStart = sharpnr.parser.findProcessableChar(source, ':', startIndex) + 1; //Find the start of the case;
+  var blockEnd = sharpnr.parser.findIdentifierFirst(source, "break", blockStart); //Find the end of the case;
   var statement = "function($$$cb" + counter + ") {" + sharpnr.await.compiler.buildStatement(source.substring(blockStart, blockEnd) + " $$$cb" + counter + "();", counter + 1) + "}";
 
   var val = source.substring(startIndex + ("case").length, blockStart - 1);
@@ -385,9 +385,9 @@ await.parser._buildCaseInternal = function (source, startIndex, counter) {
   return { output: res, cursor: blockEnd + ("break").length };
 }
 
-await.parser._buildDefaultCaseInternal = function (source, startIndex, counter) {
-  var blockStart = await.parser.findProcessableChar(source, ':', startIndex) + 1; //Find the start of the case;
-  var blockEnd = await.parser.findIdentifierFirst(source, "break", blockStart); //Find the end of the case;
+sharpnr.parser._buildDefaultCaseInternal = function (source, startIndex, counter) {
+  var blockStart = sharpnr.parser.findProcessableChar(source, ':', startIndex) + 1; //Find the start of the case;
+  var blockEnd = sharpnr.parser.findIdentifierFirst(source, "break", blockStart); //Find the end of the case;
   var statement = "function($$$cb" + counter + ") {" + sharpnr.await.compiler.buildStatement(source.substring(blockStart, blockEnd) + " $$$cb" + counter + "();", counter + 1) + "}";
 
   return { output: statement, cursor: blockEnd + ("break").length };
@@ -397,8 +397,8 @@ await.parser._buildDefaultCaseInternal = function (source, startIndex, counter) 
 
 //Builds an await statement.
 sharpnr.await.compiler.buildAwait = function (source, startIndex, counter) {
-  var argsStart = await.parser.findProcessableCharOnSameLevel(source, '(', startIndex); //Find the start of the argument list.
-  var expressionEnd = await.parser.findProcessableCharOnSameLevel(source, ';', argsStart); //Find the end the await statement.  
+  var argsStart = sharpnr.parser.findProcessableCharOnSameLevel(source, '(', startIndex); //Find the start of the argument list.
+  var expressionEnd = sharpnr.parser.findProcessableCharOnSameLevel(source, ';', argsStart); //Find the end the await statement.  
 
   //Find the last segment start on the correct level, to ensure that when a call list is provided in the expression
   //the correct call will be used as the base of the await operation.
@@ -407,13 +407,13 @@ sharpnr.await.compiler.buildAwait = function (source, startIndex, counter) {
   var argsEnd = 0;
   var callbackPosition = -1;
   while (true) {
-    temp = await.parser.findProcessableCharOnSameLevel(source, '(', temp);
+    temp = sharpnr.parser.findProcessableCharOnSameLevel(source, '(', temp);
     if (temp != -1 && temp < expressionEnd) {
       argsStart = temp + 1; //Save the potential start position.
-      argsEnd = await.parser.findSegmentEnd(source, argsStart); //Find the end of the argument list.
+      argsEnd = sharpnr.parser.findSegmentEnd(source, argsStart); //Find the end of the argument list.
 
       //Try to find the exact callback position:
-      callbackPosition = await.parser.findIdentifierFirstOnLevel(source, "$$", 0, argsStart);
+      callbackPosition = sharpnr.parser.findIdentifierFirstOnLevel(source, "$$", 0, argsStart);
       if (callbackPosition != -1 && callbackPosition < argsEnd) {
         //Prefer user settings over compiler defaults.
         // => Use an earlier method call as the awaited method, when the user exactly specifies the callback position.
@@ -424,22 +424,22 @@ sharpnr.await.compiler.buildAwait = function (source, startIndex, counter) {
     }
     else { break; }
   }
-  var hasArgs = (await.parser.findAllProcessableChars(source.substring(argsStart, argsEnd).replace(/ /g, '')).length > 0);
+  var hasArgs = (sharpnr.parser.findAllProcessableChars(source.substring(argsStart, argsEnd).replace(/ /g, '')).length > 0);
 
-  var callStart = await.parser.findProcessableChar(source, ' ', startIndex) + 1; //Find the start of the function call statement.
+  var callStart = sharpnr.parser.findProcessableChar(source, ' ', startIndex) + 1; //Find the start of the function call statement.
   var callEnd = expressionEnd + 1; //Find the end of the function call statement.
 
   //Find the optional return value of the call:
   var globalName = "";
   var varName = "";
-  if (await.parser.findProcessableCharBack(source, '=', startIndex - 1, [' ']) != -1) {
+  if (sharpnr.parser.findProcessableCharBack(source, '=', startIndex - 1, [' ']) != -1) {
     //Return value exists.
-    var findVarNameRes = await.parser.findIdentifierBack(source, startIndex - 1)
+    var findVarNameRes = sharpnr.parser.findIdentifierBack(source, startIndex - 1)
     varName = findVarNameRes.output;
 
     //Is it global or local?
-    var varPos = await.parser.findIdentifierFirstBack(source, "var", findVarNameRes.cursor) + ("var").length;
-    if (varPos == (-1 + 3) && varName != await.parser.findIdentifier(source, varPos).output) {
+    var varPos = sharpnr.parser.findIdentifierFirstBack(source, "var", findVarNameRes.cursor) + ("var").length;
+    if (varPos == (-1 + 3) && varName != sharpnr.parser.findIdentifier(source, varPos).output) {
       //Global variable
       globalName = varName;
       varName = "";
@@ -447,7 +447,7 @@ sharpnr.await.compiler.buildAwait = function (source, startIndex, counter) {
   }
 
   //Find the optional code part between the end of the block and the end of the expression.
-  var hasCode = (await.parser.findAllProcessableChars(source.substring(argsEnd + 1, callEnd - 1).replace(/ /g, '')).length > 0);
+  var hasCode = (sharpnr.parser.findAllProcessableChars(source.substring(argsEnd + 1, callEnd - 1).replace(/ /g, '')).length > 0);
   var code = "";
   if (hasCode) {
     code = (varName != "" ? varName : "arguments[0]") + "=arguments[0]" + sharpnr.await.compiler.buildStatement(source.substring(argsEnd + 1, callEnd - 1), counter, { awaitMode: true }) + ";";
@@ -458,7 +458,7 @@ sharpnr.await.compiler.buildAwait = function (source, startIndex, counter) {
   var resultStart = "";
   var resultEnd = "";
 
-  callbackPosition = await.parser.findIdentifierFirstOnLevel(source, "$$", 0, argsStart);
+  callbackPosition = sharpnr.parser.findIdentifierFirstOnLevel(source, "$$", 0, argsStart);
   if (callbackPosition == -1 || callbackPosition > callEnd) {
     //Default case:
     resultStart = sharpnr.await.compiler.buildStatement(source.substring(callStart, argsEnd), counter, { awaitMode: true }) + (hasArgs ? ',' : '') + "function(" + varName + ") {" + (globalName != "" ? globalName + "=arguments[0];" : "") + code;
