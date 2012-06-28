@@ -1485,6 +1485,7 @@ sharpnr.await.compiler.compile = function (expression) {
 
 //Keywords:
 var $$ = {}; //Defines the placeholder keyword for callbacks.
+var await = {};
 
 //This method of the library enables you to define async methods in JavaScript.
 function async(method) {
