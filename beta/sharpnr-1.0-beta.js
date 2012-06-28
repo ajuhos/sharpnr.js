@@ -1234,7 +1234,7 @@ sharpnr.await.compiler.buildFor = function (source, startIndex, counter, opts) {
     result = "sharpnr.await.$for(" + expr1 + "," + expr2 + "," + expr3 + "," + statement + ", function() {"
   }
   else {
-    result = "await." + (opts.forceForeach ? "foreach" : "forin") + "(" + expr1 + "," + expr2 + "," + statement + ", function() {"
+    result = "sharpnr.await." + (opts.forceForeach ? "foreach" : "forin") + "(" + expr1 + "," + expr2 + "," + statement + ", function() {"
   }
 
   var resultEnd = "});";
