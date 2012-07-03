@@ -19,10 +19,10 @@ sharpnr.await.compiler.buildStatement = function (expression, counter, opts) {
   state.inKeyword = false;
   state.keyword = "";
 
-  var expression = expression + ' '; //Ensure that last char is not important.
-  for (var i = 0; i < expression.length; i++) {
+  var expression = expression;
+  for (var i = 0; i < expression.length + 2; i++) { //Ensure that last char is not important.
     state.lastChar = state.char;
-    state.char = expression.charAt(i);
+    state.char = expression.charAt(i) || '';
 
     //Verify last keyword, if has one.
     if (!state.inKeyword && state.keyword != "" && state.keyword != undefined) {
