@@ -332,23 +332,23 @@ String.prototype.parseLambda = function(ctx)
 /////////////////////////////////////
 
 /// ASARRAY ///
-/// Array Object.asArray() ///
+/// Array sharpnr.asArray() ///
 //Converts any object to array
-Object.prototype.asArray = function()
+sharpnr.asArray = function(obj)
 {
-  if(!this)
-  {
+  return sharpnr._asArray.apply(obj, []);
+};
+sharpnr._asArray = function () {
+  if (!this) {
     return null;
   }
 
   var c = [];
 
-  for (var key in this) 
-  {
-    if ( ( this instanceof Array && this.constructor === Array && key === 'length' ) || 
-           key === '$attached' || 
-          !this.hasOwnProperty(key) ) 
-    {
+  for (var key in this) {
+    if ((this instanceof Array && this.constructor === Array && key === 'length') ||
+           key === '$attached' ||
+          !this.hasOwnProperty(key)) {
       continue;
     }
 
@@ -357,6 +357,7 @@ Object.prototype.asArray = function()
 
   return c;
 };
+
 
 /// RANDOMINDEX ///
 /// number Array.randomIndex([min], [max]) ///
