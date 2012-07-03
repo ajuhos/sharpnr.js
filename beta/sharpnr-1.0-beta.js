@@ -27,8 +27,6 @@
 
 //------------------------------------------------------------------------
 
-"use strict"; //As our aim is to mke JavaScript as good a s C#, it is recommended to use strict mode.
-
 var sharpnr = {}; //Namespace definition.
 
 //OLD IE support:
@@ -73,7 +71,7 @@ sharpnr.parser.isAlphanumeric = function (character) {
 }
 
 sharpnr.parser.isSeparator = function (character) {
-  return (['.', ' ', '\n', '\r', '\t', ',', ';', '(', '[', '+', '-', '*', '/', '\\', '&', '|', '~', '^', '<', '>', ':', '=', '!', '%', ')', ']', '{', '}'].indexOf(character) != -1);
+  return (['', '.', ' ', '\n', '\r', '\t', ',', ';', '(', '[', '+', '-', '*', '/', '\\', '&', '|', '~', '^', '<', '>', ':', '=', '!', '%', ')', ']', '{', '}'].indexOf(character) != -1);
 }
 
 //------------------------------------------------------------------
@@ -1005,8 +1003,8 @@ sharpnr.await.compiler.buildStatement = function (expression, counter, opts) {
   state.inKeyword = false;
   state.keyword = "";
 
-  var expression = expression + ' '; //Ensure that last char is not important.
-  for (var i = 0; i < expression.length; i++) {
+  var expression = expression;
+  for (var i = 0; i < expression.length + 2; i++) { //Ensure that last char is not important.
     state.lastChar = state.char;
     state.char = expression.charAt(i);
 
@@ -1828,23 +1826,23 @@ String.prototype.parseLambda = function(ctx)
 /////////////////////////////////////
 
 /// ASARRAY ///
-/// Array Object.asArray() ///
+/// Array sharpnr.asArray() ///
 //Converts any object to array
-Object.prototype.asArray = function()
+sharpnr.asArray = function(obj)
 {
-  if(!this)
-  {
+  return sharpnr._asArray.apply(obj, []);
+};
+sharpnr._asArray = function () {
+  if (!this) {
     return null;
   }
 
   var c = [];
 
-  for (var key in this) 
-  {
-    if ( ( this instanceof Array && this.constructor === Array && key === 'length' ) || 
-           key === '$attached' || 
-          !this.hasOwnProperty(key) ) 
-    {
+  for (var key in this) {
+    if ((this instanceof Array && this.constructor === Array && key === 'length') ||
+           key === '$attached' ||
+          !this.hasOwnProperty(key)) {
       continue;
     }
 
